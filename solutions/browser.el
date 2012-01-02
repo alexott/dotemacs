@@ -115,28 +115,33 @@
     (rename-file old-name new-name)))
 
 (defun my-rename-file (file)
-  (let ((old-name (if (string= "/" (substring file (- (length file) 1) (length file))) (substring file 0 (- (length file) 1)) file)))
-  (let ((old-name-dir (file-name-directory old-name)))
-  (let ((old-name-name (file-name-nondirectory old-name)))
-  (let ((new-name-name (read-from-minibuffer "New name: " old-name-name)))
-  (let ((new-name (concat old-name-dir new-name-name)))
-  ;; xeno.by: automatic replace after rename is hard, since we must handle lots of cases and might still fail
-  ;; that's why I just crash and let the user handle the conflict by him/herself
-  ;; (let ((ok (or (not (file-exists-p new-name))
-  ;;               (yes-or-no-p (concat "File " new-name-name " exists. Really rename? ")))))
-  (let ((ok (progn (if (file-exists-p new-name) (message (concat "File " new-name-name " already exists."))) (not (file-exists-p new-name)))))
-  (when ok
-    ;; xeno.by: added integration with VC framework
-    ;;(rename-file old-name new-name))
-    (my-rename-file-on-disk old-name new-name)
+  (let ((old-name (if (string= "/" (substring file (- (length file) 1) (length file)))
+		      (substring file 0 (- (length file) 1))
+		    file))
+	(old-name-dir (file-name-directory old-name))
+	(old-name-name (file-name-nondirectory old-name))
+	(new-name-name (read-from-minibuffer "New name: " old-name-name))
+	(new-name (concat old-name-dir new-name-name))
+	(ok (progn (if (file-exists-p new-name)
+		       (message (concat "File " new-name-name " already exists.")))
+		   (not (file-exists-p new-name))))
+	)
+    ;; xeno.by: automatic replace after rename is hard, since we must handle lots of cases and might still fail
+    ;; that's why I just crash and let the user handle the conflict by him/herself
+    ;; (let ((ok (or (not (file-exists-p new-name))
+    ;;               (yes-or-no-p (concat "File " new-name-name " exists. Really rename? ")))))
+    (when ok
+      ;; xeno.by: added integration with VC framework
+      ;;(rename-file old-name new-name))
+      (my-rename-file-on-disk old-name new-name)
 
-    (let ((buffer (get-file-buffer file)))
-    (when buffer
-      (with-current-buffer buffer
-        (let ((was-modified (buffer-modified-p)))
-          (rename-buffer new-name-name)
-          (set-visited-file-name new-name)
-          (if (not was-modified) (set-buffer-modified-p nil))))))))))))))
+      (let ((buffer (get-file-buffer file)))
+	(when buffer
+	  (with-current-buffer buffer
+	    (let ((was-modified (buffer-modified-p)))
+	      (rename-buffer new-name-name)
+	      (set-visited-file-name new-name)
+	      (if (not was-modified) (set-buffer-modified-p nil)))))))))
 
 (defun my-rename-directory-on-disk (old-name new-name)
   (let ((first-existing-parent (file-name-directory (directory-file-name new-name))))
